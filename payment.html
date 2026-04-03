@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Complete Payment — RJS Fin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@1,700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green:   #00D09C;
+      --green-h: #00B386;
+      --green-l: #E6FFF7;
+      --green-d: #00876A;
+      --dark:    #1F2937;
+      --mid:     #4B5563;
+      --muted:   #9CA3AF;
+      --border:  #E5E7EB;
+      --bg:      #F7F9FB;
+      --white:   #FFFFFF;
+      --neg:     #DC2626;
+      --r:       14px;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--dark);
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    .nav {
+      background: rgba(255,255,255,.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      height: 60px;
+      display: flex;
+      align-items: center;
+      padding: 0 clamp(16px,5vw,64px);
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-logo {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--dark);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nav-logo-icon {
+      width: 32px; height: 32px;
+      background: var(--green);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-logo-icon svg { width: 18px; height: 18px; }
+    .nav-back {
+      margin-left: auto;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--mid);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color .2s;
+    }
+    .nav-back:hover { color: var(--green); }
+
+    /* ── LAYOUT ── */
+    .page {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 40px clamp(16px,4vw,40px) 80px;
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 32px;
+      align-items: start;
+    }
+    @media (max-width: 820px) {
+      .page { grid-template-columns: 1fr; }
+      .order-summary { order: -1; }
+    }
+
+    /* ── SECTION HEADERS ── */
+    .step-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .step-num {
+      width: 28px; height: 28px;
+      background: var(--green);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+
+    /* ── UPI QR SECTION ── */
+    .upi-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 24px;
+      background: var(--green-l);
+      border-radius: var(--r);
+      border: 1.5px dashed rgba(0,208,156,.5);
+      margin-bottom: 24px;
+    }
+    .qr-placeholder {
+      width: 160px; height: 160px;
+      background: var(--white);
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .qr-placeholder svg { opacity: .25; }
+    .qr-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--green-d);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .upi-id-box {
+      background: var(--white);
+      border: 1.5px solid rgba(0,208,156,.4);
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: border-color .2s;
+      width: 100%;
+      justify-content: space-between;
+    }
+    .upi-id-box:hover { border-color: var(--green); }
+    .copy-btn {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--green);
+      background: var(--green-l);
+      border: none;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: .2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .copy-btn:hover { background: var(--green); color: #fff; }
+    .copy-btn.copied { background: var(--green); color: #fff; }
+
+    .payment-methods {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .pm-btn {
+      flex: 1;
+      min-width: 90px;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: var(--white);
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--mid);
+      cursor: pointer;
+      transition: .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .pm-btn.active {
+      border-color: var(--green);
+      color: var(--green);
+      background: var(--green-l);
+    }
+    .pm-btn:hover { border-color: var(--green); color: var(--green); }
+
+    /* ── FORM ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 540px) { .form-grid { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--mid);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .req { color: var(--neg); }
+    input, select, textarea {
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: var(--dark);
+      background: var(--white);
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+      width: 100%;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(0,208,156,.12);
+    }
+    input.error { border-color: var(--neg); }
+    .field-hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    textarea { resize: vertical; min-height: 72px; }
+
+    /* ── SUBMIT BUTTON ── */
+    .btn-submit {
+      width: 100%;
+      padding: 16px;
+      background: var(--green);
+      border: none;
+      border-radius: 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      transition: background .2s, transform .15s, box-shadow .2s;
+      box-shadow: 0 6px 24px rgba(0,208,156,.3);
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-submit:hover { background: var(--green-h); transform: translateY(-2px); box-shadow: 0 10px 32px rgba(0,208,156,.38); }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    /* Spinner */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── ORDER SUMMARY ── */
+    .order-summary {}
+    .course-badge {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 100px;
+      background: var(--green-l);
+      color: var(--green-d);
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    .course-name {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--dark);
+      line-height: 1.25;
+      margin-bottom: 6px;
+    }
+    .course-desc {
+      font-size: 13px;
+      color: var(--mid);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .price-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .price-row:last-child { border-bottom: none; }
+    .price-row .label { color: var(--mid); font-weight: 500; }
+    .price-row .val { font-weight: 700; color: var(--dark); }
+    .price-row .val.green { color: var(--green); }
+    .price-row.total .label { font-size: 15px; font-weight: 700; color: var(--dark); }
+    .price-row.total .val { font-size: 20px; color: var(--green); }
+
+    .trust-list {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--mid);
+      font-weight: 500;
+    }
+    .trust-icon {
+      width: 28px; height: 28px;
+      background: var(--green-l);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ── SUCCESS MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.5);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--white);
+      border-radius: 24px;
+      padding: 44px 36px 36px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      animation: modalPop .35s cubic-bezier(.22,1,.36,1) forwards;
+      box-shadow: 0 24px 80px rgba(0,0,0,.18);
+    }
+    @keyframes modalPop {
+      from { transform: scale(.85) translateY(24px); opacity: 0; }
+      to   { transform: scale(1)   translateY(0);    opacity: 1; }
+    }
+    .modal-icon {
+      width: 72px; height: 72px;
+      background: var(--green-l);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .modal-icon svg { width: 36px; height: 36px; }
+    .modal-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 10px;
+    }
+    .modal-sub {
+      font-size: 14px;
+      color: var(--mid);
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+    .modal-ref {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .modal-ref span {
+      font-weight: 800;
+      color: var(--dark);
+      font-size: 15px;
+    }
+    .btn-modal {
+      width: 100%;
+      padding: 15px;
+      background: var(--green);
+      border: none;
+      border-radius: 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      transition: .2s;
+    }
+    .btn-modal:hover { background: var(--green-h); }
+
+    /* ── STEPS PROGRESS BAR ── */
+    .progress-steps {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 32px;
+    }
+    .ps-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+    .ps-dot {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      flex-shrink: 0;
+      transition: .3s;
+    }
+    .ps-dot.done { background: var(--green); color: #fff; }
+    .ps-dot.active { background: var(--dark); color: #fff; }
+    .ps-name { font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+    .ps-name.active { color: var(--dark); }
+    .ps-line {
+      flex: 1;
+      height: 2px;
+      background: var(--border);
+      margin: 0 8px;
+    }
+    .ps-line.done { background: var(--green); }
+
+    /* ── ALERT ── */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .alert.error { background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; display: block; }
+    .alert.success { background: var(--green-l); color: var(--green-d); border: 1px solid rgba(0,208,156,.3); display: block; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    RJS Fin
+  </a>
+  <a href="index.html" class="nav-back">
+    ← Back to Home
+  </a>
+</nav>
+
+<!-- PAGE -->
+<div class="page">
+
+  <!-- LEFT COLUMN -->
+  <div>
+    <!-- Progress steps -->
+    <div class="progress-steps">
+      <div class="ps-step">
+        <div class="ps-dot done">✓</div>
+        <span class="ps-name">Select Course</span>
+      </div>
+      <div class="ps-line done"></div>
+      <div class="ps-step">
+        <div class="ps-dot active">2</div>
+        <span class="ps-name active">Pay &amp; Submit</span>
+      </div>
+      <div class="ps-line"></div>
+      <div class="ps-step">
+        <div class="ps-dot">3</div>
+        <span class="ps-name">Access Course</span>
+      </div>
+    </div>
+
+    <!-- STEP 1: Pay via UPI -->
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">1</div>
+        <div class="step-title">Pay via UPI / Bank Transfer</div>
+      </div>
+
+      <!-- Payment method selector -->
+      <div class="payment-methods">
+        <button class="pm-btn active" data-method="UPI" onclick="selectMethod(this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          UPI
+        </button>
+        <button class="pm-btn" data-method="NEFT/IMPS" onclick="selectMethod(this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          NEFT / IMPS
+        </button>
+        <button class="pm-btn" data-method="PhonePe" onclick="selectMethod(this)">📱 PhonePe</button>
+        <button class="pm-btn" data-method="GPay" onclick="selectMethod(this)">💳 GPay</button>
+        <button class="pm-btn" data-method="Paytm" onclick="selectMethod(this)">🔵 Paytm</button>
+      </div>
+
+      <!-- UPI section -->
+      <div class="upi-box">
+        <div class="qr-label">Scan QR Code</div>
+        <div class="qr-placeholder">
+          <!-- Replace this SVG with an actual QR code image -->
+          <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+            <rect x="10" y="10" width="30" height="30" stroke="#000" stroke-width="3" fill="none"/>
+            <rect x="17" y="17" width="16" height="16" fill="#000"/>
+            <rect x="60" y="10" width="30" height="30" stroke="#000" stroke-width="3" fill="none"/>
+            <rect x="67" y="17" width="16" height="16" fill="#000"/>
+            <rect x="10" y="60" width="30" height="30" stroke="#000" stroke-width="3" fill="none"/>
+            <rect x="17" y="67" width="16" height="16" fill="#000"/>
+            <rect x="45" y="45" width="8" height="8" fill="#000"/>
+            <rect x="58" y="45" width="8" height="8" fill="#000"/>
+            <rect x="71" y="45" width="8" height="8" fill="#000"/>
+            <rect x="84" y="45" width="8" height="8" fill="#000"/>
+            <rect x="58" y="58" width="8" height="8" fill="#000"/>
+            <rect x="71" y="71" width="8" height="8" fill="#000"/>
+            <rect x="84" y="84" width="8" height="8" fill="#000"/>
+          </svg>
+        </div>
+        <div style="font-size:12px;color:var(--mid);text-align:center">Scan with any UPI app — Google Pay, PhonePe, Paytm, BHIM</div>
+        <div style="width:100%;font-size:12px;font-weight:600;color:var(--muted);text-align:center">— or pay directly to UPI ID —</div>
+        <div class="upi-id-box" onclick="copyUPI()">
+          <span id="upiIdText">rjsfin@upi</span>
+          <button class="copy-btn" id="copyBtn">Copy</button>
+        </div>
+      </div>
+
+      <p style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:4px">
+        💡 After payment, note your <strong>Transaction ID / UTR number</strong> and fill the form below
+      </p>
+    </div>
+
+    <!-- STEP 2: Submit details -->
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">2</div>
+        <div class="step-title">Confirm Your Payment Details</div>
+      </div>
+
+      <div id="formAlert" class="alert"></div>
+
+      <form id="paymentForm" onsubmit="submitPayment(event)">
+        <div class="form-grid">
+
+          <div class="form-group full">
+            <label>Course <span class="req">*</span></label>
+            <select id="courseTitle" name="course_title" required>
+              <option value="">— Select Course —</option>
+              <option value="Starter Plan">Starter Plan — FREE</option>
+              <option value="Technical Analysis + AI Lab">Technical Analysis + AI Lab — ₹1,499</option>
+              <option value="Core Course">Core Course — ₹2,999</option>
+              <option value="Options Mastery">Options Mastery — ₹5,999</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Your Full Name <span class="req">*</span></label>
+            <input type="text" id="studentName" name="student_name" placeholder="Raman Sharma" required/>
+          </div>
+
+          <div class="form-group">
+            <label>Email Address <span class="req">*</span></label>
+            <input type="email" id="studentEmail" name="student_email" placeholder="you@example.com" required/>
+          </div>
+
+          <div class="form-group">
+            <label>Phone Number</label>
+            <input type="tel" id="studentPhone" name="student_phone" placeholder="+91 98765 43210"/>
+          </div>
+
+          <div class="form-group">
+            <label>Amount Paid (₹) <span class="req">*</span></label>
+            <input type="number" id="amountPaid" name="amount" placeholder="0" min="0" required readonly/>
+            <span class="field-hint">Auto-filled based on course selected</span>
+          </div>
+
+          <div class="form-group">
+            <label>Payment Method</label>
+            <input type="text" id="paymentMethodField" name="payment_method" value="UPI" readonly/>
+          </div>
+
+          <div class="form-group full">
+            <label>Transaction ID / UTR Number <span class="req">*</span></label>
+            <input type="text" id="transactionId" name="transaction_id" placeholder="e.g. 421893764521" required/>
+            <span class="field-hint">Find this in your UPI app → Payment History → Transaction ID</span>
+          </div>
+
+          <div class="form-group full">
+            <label>Screenshot / Note (optional)</label>
+            <textarea id="screenshotNote" name="screenshot_note" placeholder="Paste any additional details or screenshot description here..."></textarea>
+          </div>
+
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">
+          <span id="btnText">Submit Payment Details</span>
+          <div class="spinner" id="btnSpinner"></div>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN: Order Summary -->
+  <div class="order-summary">
+    <div class="card" style="position:sticky;top:80px">
+      <div class="step-label" style="margin-bottom:16px">
+        <div class="step-num" style="background:var(--dark)">📋</div>
+        <div class="step-title">Order Summary</div>
+      </div>
+
+      <span class="course-badge" id="summaryBadge">Select a course</span>
+      <div class="course-name" id="summaryName">—</div>
+      <div class="course-desc" id="summaryDesc">Choose a course on the left to see its details here.</div>
+
+      <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px">
+        <div class="price-row">
+          <span class="label">Course Price</span>
+          <span class="val" id="summaryOriginal">—</span>
+        </div>
+        <div class="price-row">
+          <span class="label">Discount</span>
+          <span class="val green" id="summaryDiscount">—</span>
+        </div>
+        <div class="price-row total">
+          <span class="label">Total Due</span>
+          <span class="val" id="summaryTotal">—</span>
+        </div>
+      </div>
+
+      <div class="trust-list">
+        <div class="trust-item">
+          <div class="trust-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00D09C" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          SEBI Compliant Platform
+        </div>
+        <div class="trust-item">
+          <div class="trust-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00D09C" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          Access activated within 2–4 hours
+        </div>
+        <div class="trust-item">
+          <div class="trust-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00D09C" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          Support via WhatsApp &amp; Email
+        </div>
+        <div class="trust-item">
+          <div class="trust-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00D09C" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          12,000+ students enrolled
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal">
+    <div class="modal-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#00D09C" stroke-width="2.5">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <div class="modal-title">Payment Submitted!</div>
+    <div class="modal-sub">
+      Thank you! We've received your payment details. Your course access will be activated within <strong>2–4 hours</strong>. We'll notify you via WhatsApp and email.
+    </div>
+    <div class="modal-ref">
+      Reference: <span id="modalRefId">—</span>
+    </div>
+    <button class="btn-modal" onclick="window.location.href='index.html'">Back to Home</button>
+  </div>
+</div>
+
+<script>
+// ── COURSE DATA ──────────────────────────────────────────────────────────────
+const COURSES = {
+  "Starter Plan":                  { price: 0,    original: 0,    discount: 0,    badge: "FREE",      desc: "Your first step into trading — market basics, chart reading & live sessions." },
+  "Technical Analysis + AI Lab":   { price: 1499, original: 2999, discount: 1500, badge: "POPULAR",   desc: "Advanced charting, AI signals, pattern recognition & live trading sessions." },
+  "Core Course":                   { price: 2999, original: 5999, discount: 3000, badge: "BESTSELLER", desc: "Full market curriculum, F&O basics, sector analysis & 1:1 mentorship." },
+  "Options Mastery":               { price: 5999, original: 9999, discount: 4000, badge: "PREMIUM",   desc: "Greeks & pricing, multi-leg strategies, live options room & lifetime access." },
+};
+
+// ── PRE-FILL FROM URL PARAMS ─────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const courseParam = params.get('course');
+  const isFree = params.get('free') === '1';
+
+  if (courseParam) {
+    const select = document.getElementById('courseTitle');
+    for (let i = 0; i < select.options.length; i++) {
+      if (select.options[i].value === courseParam) {
+        select.value = courseParam;
+        break;
+      }
+    }
+    updateCourseSummary(courseParam);
+  }
+
+  // Pre-fill user info if logged in
+  const user = JSON.parse(localStorage.getItem('rjsfin_user') || 'null');
+  if (user) {
+    document.getElementById('studentName').value  = user.name  || '';
+    document.getElementById('studentEmail').value = user.email || '';
+  }
+});
+
+// ── UPDATE SUMMARY ON COURSE CHANGE ─────────────────────────────────────────
+document.getElementById('courseTitle').addEventListener('change', function() {
+  updateCourseSummary(this.value);
+});
+
+function updateCourseSummary(title) {
+  const c = COURSES[title];
+  if (!c) return;
+
+  document.getElementById('amountPaid').value = c.price;
+  document.getElementById('summaryBadge').textContent = c.badge;
+  document.getElementById('summaryName').textContent  = title;
+  document.getElementById('summaryDesc').textContent  = c.desc;
+  document.getElementById('summaryOriginal').textContent = c.original === 0 ? 'FREE' : '₹' + c.original.toLocaleString('en-IN');
+  document.getElementById('summaryDiscount').textContent = c.discount > 0 ? '− ₹' + c.discount.toLocaleString('en-IN') : '—';
+  document.getElementById('summaryTotal').textContent    = c.price === 0 ? 'FREE' : '₹' + c.price.toLocaleString('en-IN');
+
+  // Hide transaction ID for free courses
+  const txRow = document.getElementById('transactionId').closest('.form-group');
+  if (c.price === 0) {
+    txRow.style.opacity = '.4';
+    document.getElementById('transactionId').required = false;
+    document.getElementById('transactionId').placeholder = 'Not required for free courses';
+  } else {
+    txRow.style.opacity = '1';
+    document.getElementById('transactionId').required = true;
+    document.getElementById('transactionId').placeholder = 'e.g. 421893764521';
+  }
+}
+
+// ── PAYMENT METHOD SELECTOR ───────────────────────────────────────────────────
+function selectMethod(btn) {
+  document.querySelectorAll('.pm-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('paymentMethodField').value = btn.dataset.method;
+}
+
+// ── COPY UPI ID ───────────────────────────────────────────────────────────────
+function copyUPI() {
+  const upiId = document.getElementById('upiIdText').textContent;
+  navigator.clipboard.writeText(upiId).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── FORM SUBMIT → POST /submit-payment ───────────────────────────────────────
+async function submitPayment(e) {
+  e.preventDefault();
+  const alert = document.getElementById('formAlert');
+  alert.className = 'alert';
+
+  const payload = {
+    course_title:    document.getElementById('courseTitle').value,
+    student_name:    document.getElementById('studentName').value.trim(),
+    student_email:   document.getElementById('studentEmail').value.trim(),
+    student_phone:   document.getElementById('studentPhone').value.trim(),
+    amount:          parseInt(document.getElementById('amountPaid').value) || 0,
+    payment_method:  document.getElementById('paymentMethodField').value,
+    transaction_id:  document.getElementById('transactionId').value.trim(),
+    screenshot_note: document.getElementById('screenshotNote').value.trim(),
+  };
+
+  // Client-side validation
+  if (!payload.course_title) {
+    showAlert('error', 'Please select a course.');
+    return;
+  }
+  if (!payload.student_name) {
+    showAlert('error', 'Please enter your full name.');
+    return;
+  }
+  if (!payload.student_email || !/\S+@\S+\.\S+/.test(payload.student_email)) {
+    showAlert('error', 'Please enter a valid email address.');
+    return;
+  }
+  if (payload.amount > 0 && !payload.transaction_id) {
+    showAlert('error', 'Please enter your Transaction ID / UTR number.');
+    return;
+  }
+
+  // Show loading state
+  const btn = document.getElementById('submitBtn');
+  const btnText = document.getElementById('btnText');
+  const spinner = document.getElementById('btnSpinner');
+  btn.disabled = true;
+  btnText.textContent = 'Submitting…';
+  spinner.style.display = 'block';
+
+  try {
+    const token = localStorage.getItem('rjsfin_token') || '';
+    const res = await fetch('http://localhost:5000/submit-payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': 'Bearer ' + token } : {})
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      document.getElementById('modalRefId').textContent = data.reference_id;
+      document.getElementById('successModal').classList.add('show');
+    } else {
+      showAlert('error', data.message || 'Something went wrong. Please try again.');
+    }
+  } catch (err) {
+    showAlert('error', 'Could not connect to server. Please check your connection and try again.');
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = 'Submit Payment Details';
+    spinner.style.display = 'none';
+  }
+}
+
+function showAlert(type, msg) {
+  const el = document.getElementById('formAlert');
+  el.textContent = msg;
+  el.className = 'alert ' + type;
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
+</body>
+</html>
