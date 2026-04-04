@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify, session, render_template
 from flask_cors import CORS
 import sqlite3
 import hashlib
@@ -124,6 +124,8 @@ def init_db():
     conn.commit()
     conn.close()
     print("✅ Database initialized.")
+
+init_db()   # runs on every startup, including gunicorn/Render
 
 # ─── HELPERS ─────────────────────────────────────────────────────────────────
 
@@ -478,6 +480,20 @@ def verify_payment(payment_id):
     return jsonify({"success": True, "message": f"Payment {new_status} successfully."})
 
 
+# ─── PAGE ROUTES ──────────────────────────────────────────────────────────────
+
+@app.route("/")
+def home_page():
+    return render_template("index.html")
+
+@app.route("/login-page")
+def login_page():
+    return render_template("login.html")
+
+@app.route("/payment-page")
+def payment_page():
+    return render_template("payment.html")
+
 # ─── HEALTH CHECK ─────────────────────────────────────────────────────────────
 
 @app.route("/health", methods=["GET"])
@@ -505,6 +521,4 @@ def options_handler(path):
     return jsonify({}), 200
 
 if __name__ == "__main__":
-    init_db()
-    print("🚀 RJS Fin backend running on http://localhost:5000")
-    app.run(debug=True, port=5000)
+    app.run(host="0.0.0.0", port=10000)
